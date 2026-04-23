@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'documind-api-m-a4hqg6ajh6a8fzc6.centralindia-01.azurewebsites.net',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
