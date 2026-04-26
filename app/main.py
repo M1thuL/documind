@@ -7,34 +7,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import auth, ingest, query
 from app.models.schemas import HealthResponse
-from app.services.vectorstore import get_vectorstore_status
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+log = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logging.getLogger(__name__).info("Starting — warming up vector store...")
-    get_vectorstore_status()
-    logging.getLogger(__name__).info("Ready.")
+    log.info("App starting up.")
     yield
+    log.info("App shutting down.")
 
 
 def create_app() -> FastAPI:
     s = get_settings()
     app = FastAPI(title=s.app_name, version=s.app_version, lifespan=lifespan)
 
-    # Read CORS origins directly from env at startup — bypasses lru_cache issue
     frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-    allowed_origins = [
+    allowed_origins = list(set([
         "http://localhost:3000",
         "http://localhost:5173",
         frontend_url,
-    ]
-    # Also allow any vercel.app subdomain
-    allowed_origins = list(set(allowed_origins))
-
-    logging.getLogger(__name__).info(f"CORS allowed origins: {allowed_origins}")
+    ]))
+    log.info(f"CORS allowed origins: {allowed_origins}")
 
     app.add_middleware(
         CORSMiddleware,
@@ -53,7 +48,7 @@ def create_app() -> FastAPI:
         return HealthResponse(
             status="ok",
             version=s.app_version,
-            vector_store=get_vectorstore_status(),
+            vector_store="ok",
         )
 
     return app
